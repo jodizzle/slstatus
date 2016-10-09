@@ -95,9 +95,14 @@ ip(const char *iface)
 static void
 hostname(void)
 {
-	char *lhost = "";
-	gethostname(lhost, HOST_NAME_MAX);
-	strlcpy(resp, lhost, sizeof(resp));
+	char buf[HOST_NAME_MAX];
+
+	if (gethostname(buf, sizeof(buf)) == -1) {
+		warn("hostname");
+		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+	}
+
+	snprintf(resp, sizeof(resp), "%s", buf);
 }
 
 static void

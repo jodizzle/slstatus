@@ -298,7 +298,10 @@ vol_perc(const char *card)
 	snd_mixer_selem_id_free(s_elem);
 	snd_mixer_close(handle);
 
-	snprintf(resp, sizeof(resp), "%d%%", (int)((uint_fast16_t)(vol * 100) / max));
+	if (max == 0)
+		snprintf(resp, sizeof(resp), "0%%");
+	else
+		snprintf(resp, sizeof(resp), "%lu%%", ((uint_fast16_t)(vol * 100) / max));
 }
 
 static void
