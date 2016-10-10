@@ -33,7 +33,7 @@ static void
 run_command(const char *cmd)
 {
 	FILE *fp;
-	char buf[64] = UNKNOWN_STR;
+	char buf[1024] = UNKNOWN_STR;
 
 	fp = popen(cmd, "r");
 	if (fp == NULL) {
@@ -41,8 +41,10 @@ run_command(const char *cmd)
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
 	}
 	fgets(buf, sizeof(buf), fp);
-	buf[sizeof(buf)-1] = '\0';
 	pclose(fp);
+
+	buf[strlen(buf)] = '\0';
+	strtok(buf, "\n");
 
 	snprintf(resp, sizeof(resp), "%s", buf);
 }
