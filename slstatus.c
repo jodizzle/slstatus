@@ -1,6 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 
 #include <err.h>
+#include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -120,6 +121,8 @@ main(int argc, char *argv[])
 	act.sa_handler = sighandler;
 	sigaction(SIGINT,  &act, 0);
 	sigaction(SIGTERM, &act, 0);
+
+	setlocale(LC_ALL, "");
 
 	while (!done) {
 		str[0] = '\0';
