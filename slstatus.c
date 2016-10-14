@@ -334,6 +334,7 @@ ram_free(void)
 		warn("Failed to open file /proc/meminfo");
 		return smprintf(UNKNOWN_STR);
 	}
+	fscanf(fp, "%*[^\n]\n"); // Skip a line
 	fscanf(fp, "MemFree: %ld kB\n", &free);
 	fclose(fp);
 
@@ -392,10 +393,10 @@ ram_perc(void)
 	for (unsigned int i = 0; i < sizeof(values)/sizeof(values[0]); i++) {
 		char str[80];
 		pch = strstr(buf, values[i]);
-		printf("%s\n", values[i]);
+		/*printf("%s\n", values[i]);*/
 		strcpy(str, values[i]);
 		strcat(str, ": %ld kB\n");
-		printf("%s\n", str);
+		/*printf("%s\n", str);*/
 		sscanf(pch, str, variables[i]);
 	}
 	/*printf("%i\n", total);*/
