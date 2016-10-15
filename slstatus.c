@@ -326,19 +326,31 @@ load_avg(void)
 static char *
 ram_free(void)
 {
-	long free;
+	long free, swap_free;
 	FILE *fp;
+	char buf[2048];
+	size_t bytes_read;
+	char *match;
 
 	fp = fopen("/proc/meminfo", "r");
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		return smprintf(UNKNOWN_STR);
 	}
-	fscanf(fp, "%*[^\n]\n"); // Skip a line
-	fscanf(fp, "MemFree: %ld kB\n", &free);
+	bytes_read = fread(buf, sizeof(char), sizeof(buf), fp);
 	fclose(fp);
+	if (bytes_read == 0 || bytes_read == sizeof(buf)) {
+		warn("Failed to read /proc/meminfo\n");
+		return smprintf(UNKNOWN_STR);
+	}
 
-	return smprintf("%f", (float)free / 1024 / 1024);
+	match = strstr(buf, "MemFree");
+	sscanf(match, "MemFree: %ld kB\n", &free);
+
+	match = strstr(buf, "SwapFree");
+	sscanf(match, "SwapFree: %ld kB\n", &swap_free);
+
+	return smprintf("%f", (float)(free + swap_free) / 1024 / 1024);
 }
 
 static char *
@@ -346,119 +358,119 @@ ram_perc(void)
 {
 	long total, free, buffers, cached, swap_cached, swap_total, swap_free;
 	FILE *fp;
+	char buf[2048];
+	size_t bytes_read;
+	char *match;
 
 	fp = fopen("/proc/meminfo", "r");
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		return smprintf(UNKNOWN_STR);
 	}
-	/*fscanf(fp, "MemTotal: %ld kB\n", &total);*/
-	/*fscanf(fp, "MemFree: %ld kB\n", &free);*/
-	/*fscanf(fp, "MemAvailable: %*d kB\nBuffers: %ld kB\n", &buffers);*/
-	/*fscanf(fp, "Cached: %ld kB\n", &cached);*/
-	/*fscanf(fp, "SwapCached: %ld kB\n", &swap_cached);*/
-	/*[> Skip 8 lines <]*/
-	/*for (int i = 0; i < 8; i++) {*/
-		/*fscanf(fp, "%*[^\n]\n");*/
-	/*}*/
-	/*fscanf(fp, "SwapTotal: %ld kB\n", &swap_total);*/
-	/*fscanf(fp, "SwapFree: %ld kB\n", &swap_free);*/
-	/*fclose(fp);*/
-	/*printf("buffers: %ld\n", buffers);*/
-	/*printf("total: %ld\n", total);*/
-	/*printf("free: %ld\n", free);*/
-	/*printf("cached: %ld\n", cached);*/
-	/*printf("swapcached: %ld\n", swap_cached);*/
-	/*printf("swaptotal: %ld\n", swap_total);*/
-	/*printf("swapfree: %ld\n", swap_free);*/
-	char buf[4096];
-	size_t bytes_read;
-	char *pch;
-	char values[7][11] = {"MemTotal", "MemFree", "Buffers", "Cached", 
-		"SwapCached", "SwapTotal", "SwapFree"};
-	long *variables[7] = {&total, &free, &buffers, &cached,
-		&swap_cached, &swap_total, &swap_free};
-
-	/*printf("%i\n", sizeof(values)/sizeof(values[0]));*/
 	bytes_read = fread(buf, sizeof(char), sizeof(buf), fp);
 	fclose(fp);
-	
 	if (bytes_read == 0 || bytes_read == sizeof(buf)) {
-		fprintf(stderr, "error: read failed\n");
-		return 0;
+		warn("Failed to read /proc/meminfo\n");
+		return smprintf(UNKNOWN_STR);
 	}
-	/*buf[bytes_read] = '\0';*/
-	/*printf("%d", sizeof(buf));*/
 
-	for (unsigned int i = 0; i < sizeof(values)/sizeof(values[0]); i++) {
-		char str[80];
-		pch = strstr(buf, values[i]);
-		/*printf("%s\n", values[i]);*/
-		strcpy(str, values[i]);
-		strcat(str, ": %ld kB\n");
-		/*printf("%s\n", str);*/
-		sscanf(pch, str, variables[i]);
-	}
-	/*printf("%i\n", total);*/
-	/*pch = strstr(buf, "MemTotal");*/
-	/*sscanf(pch, "MemTotal: %ld kB\n", &total);*/
+	match = strstr(buf, "MemTotal");
+	sscanf(match, "MemTotal: %ld kB\n", &total);
 
-	/*pch = strstr(buf, "MemFree");*/
-	/*sscanf(pch, "MemFree: %ld kB\n", &free);*/
+	match = strstr(buf, "MemFree");
+	sscanf(match, "MemFree: %ld kB\n", &free);
 
-	/*pch = strstr(buf, "Buffers");*/
-	/*sscanf(pch, "Buffers: %ld kB\n", &buffers);*/
+	match = strstr(buf, "Buffers");
+	sscanf(match, "Buffers: %ld kB\n", &buffers);
 
-	/*pch = strstr(buf, "Cached");*/
-	/*sscanf(pch, "Cached: %ld kB\n", &cached);*/
+	match = strstr(buf, "Cached");
+	sscanf(match, "Cached: %ld kB\n", &cached);
 
-	/*pch = strstr(buf, "SwapCached");*/
-	/*sscanf(pch, "SwapCached: %ld kB\n", &swap_cached);*/
+	match = strstr(buf, "SwapCached");
+	sscanf(match, "SwapCached: %ld kB\n", &swap_cached);
 
-	/*pch = strstr(buf, "SwapTotal");*/
-	/*sscanf(pch, "SwapTotal: %ld kB\n", &swap_total);*/
+	match = strstr(buf, "SwapTotal");
+	sscanf(match, "SwapTotal: %ld kB\n", &swap_total);
 
-	/*pch = strstr(buf, "SwapFree");*/
-	/*sscanf(pch, "SwapFree: %ld kB\n", &swap_free);*/
+	match = strstr(buf, "SwapFree");
+	sscanf(match, "SwapFree: %ld kB\n", &swap_free);
 
-	return smprintf("%d%%", 100 * ((total + swap_total - free - swap_free) - (buffers + cached + swap_cached)) / (total + swap_total));
+	return smprintf("%d%%", 100 * ((total + swap_total) - (free + swap_free) - (buffers + cached + swap_cached)) / (total + swap_total));
 }
 
 static char *
 ram_total(void)
 {
-	long total;
+	long total, swap_total;
 	FILE *fp;
+	char buf[2048];
+	size_t bytes_read;
+	char *match;
 
 	fp = fopen("/proc/meminfo", "r");
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		return smprintf(UNKNOWN_STR);
 	}
-	fscanf(fp, "MemTotal: %ld kB\n", &total);
+	bytes_read = fread(buf, sizeof(char), sizeof(buf), fp);
 	fclose(fp);
+	if (bytes_read == 0 || bytes_read == sizeof(buf)) {
+		warn("Failed to read /proc/meminfo\n");
+		return smprintf(UNKNOWN_STR);
+	}
 
-	return smprintf("%f", (float)total / 1024 / 1024);
+	match = strstr(buf, "MemTotal");
+	sscanf(match, "MemTotal: %ld kB\n", &total);
+
+	match = strstr(buf, "SwapTotal");
+	sscanf(match, "SwapTotal: %ld kB\n", &swap_total);
+
+	return smprintf("%f", (float)(total + swap_total) / 1024 / 1024);
 }
 
 static char *
 ram_used(void)
 {
-	long free, total, buffers, cached;
+	long total, free, buffers, cached, swap_cached, swap_total, swap_free;
 	FILE *fp;
+	char buf[2048];
+	size_t bytes_read;
+	char *match;
 
 	fp = fopen("/proc/meminfo", "r");
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		return smprintf(UNKNOWN_STR);
 	}
-	fscanf(fp, "MemTotal: %ld kB\n", &total);
-	fscanf(fp, "MemFree: %ld kB\n", &free);
-	fscanf(fp, "MemAvailable: %ld kB\nBuffers: %ld kB\n", &buffers, &buffers);
-	fscanf(fp, "Cached: %ld kB\n", &cached);
+	bytes_read = fread(buf, sizeof(char), sizeof(buf), fp);
 	fclose(fp);
+	if (bytes_read == 0 || bytes_read == sizeof(buf)) {
+		warn("Failed to read /proc/meminfo\n");
+		return smprintf(UNKNOWN_STR);
+	}
 
-	return smprintf("%f", (float)(total - free - buffers - cached) / 1024 / 1024);
+	match = strstr(buf, "MemTotal");
+	sscanf(match, "MemTotal: %ld kB\n", &total);
+
+	match = strstr(buf, "MemFree");
+	sscanf(match, "MemFree: %ld kB\n", &free);
+
+	match = strstr(buf, "Buffers");
+	sscanf(match, "Buffers: %ld kB\n", &buffers);
+
+	match = strstr(buf, "Cached");
+	sscanf(match, "Cached: %ld kB\n", &cached);
+
+	match = strstr(buf, "SwapCached");
+	sscanf(match, "SwapCached: %ld kB\n", &swap_cached);
+
+	match = strstr(buf, "SwapTotal");
+	sscanf(match, "SwapTotal: %ld kB\n", &swap_total);
+
+	match = strstr(buf, "SwapFree");
+	sscanf(match, "SwapFree: %ld kB\n", &swap_free);
+
+	return smprintf("%f", (float)((total + swap_total) - (free + swap_free) - buffers - (cached + swap_cached)) / 1024 / 1024);
 }
 
 static char *
