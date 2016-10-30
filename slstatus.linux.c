@@ -28,6 +28,7 @@ battery_perc(const char *bat)
 	if (fp == NULL) {
 		warn("Failed to open file %s", concat);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%i", &perc);
 	fclose(fp);
@@ -46,6 +47,7 @@ battery_state(const char *bat)
 	if (fp == NULL) {
 		warn("Failed to open file %s", concat);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%12s", state);
 	fclose(fp);
@@ -72,6 +74,7 @@ cpu_perc(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/stat");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &a[0], &a[1], &a[2], &a[3]);
 	fclose(fp);
@@ -83,6 +86,7 @@ cpu_perc(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/stat");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%*s %Lf %Lf %Lf %Lf", &b[0], &b[1], &b[2], &b[3]);
 	fclose(fp);
@@ -99,6 +103,7 @@ disk_free(const char *mnt)
 	if (statvfs(mnt, &fs) < 0) {
 		warn("Failed to get filesystem info");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%f", (float)fs.f_bsize * (float)fs.f_bfree / 1024 / 1024 / 1024);
@@ -113,6 +118,7 @@ disk_perc(const char *mnt)
 	if (statvfs(mnt, &fs) < 0) {
 		warn("Failed to get filesystem info");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	perc = 100 * (1.0f - ((float)fs.f_bfree / (float)fs.f_blocks));
@@ -128,6 +134,7 @@ disk_total(const char *mnt)
 	if (statvfs(mnt, &fs) < 0) {
 		warn("Failed to get filesystem info");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%f", (float)fs.f_bsize * (float)fs.f_blocks / 1024 / 1024 / 1024);
@@ -141,6 +148,7 @@ disk_used(const char *mnt)
 	if (statvfs(mnt, &fs) < 0) {
 		warn("Failed to get filesystem info");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%f", (float)fs.f_bsize * ((float)fs.f_blocks - (float)fs.f_bfree) / 1024 / 1024 / 1024);
@@ -156,6 +164,7 @@ entropy(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/sys/kernel/random/entropy_avail");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%d", &num);
 	fclose(fp);
@@ -173,6 +182,7 @@ ram_free(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "MemFree: %ld kB\n", &free);
 	fclose(fp);
@@ -190,6 +200,7 @@ ram_perc(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "MemTotal: %ld kB\n", &total);
 	fscanf(fp, "MemFree: %ld kB\n", &free);
@@ -210,6 +221,7 @@ ram_total(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "MemTotal: %ld kB\n", &total);
 	fclose(fp);
@@ -227,6 +239,7 @@ ram_used(void)
 	if (fp == NULL) {
 		warn("Failed to open file /proc/meminfo");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "MemTotal: %ld kB\n", &total);
 	fscanf(fp, "MemFree: %ld kB\n", &free);
@@ -398,6 +411,7 @@ temp(const char *file)
 	if (fp == NULL) {
 		warn("Failed to open file %s", file);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fscanf(fp, "%d", &temp);
 	fclose(fp);
@@ -440,6 +454,7 @@ vol_perc(const char *card)
 		snd_mixer_close(handle);
 		warn("Failed to get volume percentage for %s", card);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snd_mixer_handle_events(handle);
@@ -469,17 +484,20 @@ wifi_perc(const char *iface)
 	if (fp == NULL) {
 		warn("Failed to open file %s", concat);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fgets(status, 5, fp);
 	fclose(fp);
 	if(strcmp(status, "up\n") != 0) {
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	fp = fopen("/proc/net/wireless", "r");
 	if (fp == NULL) {
 		warn("Failed to open file /proc/net/wireless");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	ccat(2, iface, ":");
 	fgets(buf, sizeof(buf), fp);
@@ -513,11 +531,13 @@ wifi_essid(const char *iface)
 	if (sockfd == -1) {
 		warn("Failed to get ESSID for interface %s", iface);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	wreq.u.essid.pointer = id;
 	if (ioctl(sockfd,SIOCGIWESSID, &wreq) == -1) {
 		warn("Failed to get ESSID for interface %s", iface);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	close(sockfd);

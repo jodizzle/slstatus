@@ -18,6 +18,7 @@ username(void)
 	if (pw == NULL) {
 		warn("Failed to get username");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%s", pw->pw_name);
@@ -39,6 +40,7 @@ run_command(const char *cmd)
 	if (fp == NULL) {
 		warn("Failed to get command output for %s", cmd);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 	fgets(buf, sizeof(buf), fp);
 	pclose(fp);
@@ -57,6 +59,7 @@ load_avg(void)
 	if (getloadavg(avgs, 3) < 0) {
 		warnx("Failed to get the load avg");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%.2f %.2f %.2f", avgs[0], avgs[1], avgs[2]);
@@ -72,6 +75,7 @@ ip(const char *iface)
 	if (getifaddrs(&ifaddr) == -1) {
 		warn("Failed to get IP address for interface %s", iface);
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
@@ -102,6 +106,7 @@ hostname(void)
 	if (gethostname(buf, sizeof(buf)) == -1) {
 		warn("hostname");
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	snprintf(resp, sizeof(resp), "%s", buf);
@@ -122,6 +127,7 @@ datetime(const char *fmt)
 	t = time(NULL);
 	if (strftime(str, sizeof(str), fmt, localtime(&t)) == 0) {
 		strlcpy(resp, UNKNOWN_STR, sizeof(resp));
+		return;
 	}
 
 	strlcpy(resp, str, sizeof(resp));
