@@ -271,6 +271,7 @@ uptime(void)
 static void
 vol_perc(const char *card)
 {
+	int mute;
 	long int vol, max, min;
 	snd_mixer_t *handle;
 	snd_mixer_elem_t *elem;
@@ -294,11 +295,14 @@ vol_perc(const char *card)
 	snd_mixer_handle_events(handle);
 	snd_mixer_selem_get_playback_volume_range(elem, &min, &max);
 	snd_mixer_selem_get_playback_volume(elem, 0, &vol);
+	snd_mixer_selem_get_playback_switch(elem, 0, &mute);
 
 	snd_mixer_selem_id_free(s_elem);
 	snd_mixer_close(handle);
 
-	if (max == 0)
+	if (!mute)
+		snprintf(resp, sizeof(resp), "mute");
+	else if (max == 0)
 		snprintf(resp, sizeof(resp), "0%%");
 	else
 		snprintf(resp, sizeof(resp), "%lu%%", ((uint_fast16_t)(vol * 100) / max));
