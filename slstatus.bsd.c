@@ -61,6 +61,26 @@ ram_used(void)
 }
 
 static void
+swap_free(void)
+{
+}
+
+static void
+swap_perc(void)
+{
+}
+
+static void
+swap_total(void)
+{
+}
+
+static void
+swap_used(void)
+{
+}
+
+static void
 temp(const char *file)
 {
 }
